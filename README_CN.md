@@ -123,10 +123,24 @@ my-new-cli/
 │   ├── version.go
 │   ├── greet.go
 │   └── mcp.go
+├── internal/
+│   └── mcp/
+│       ├── server.go
+│       ├── handler/
+│       │   └── hello.go
+│       └── service/
+│           └── greeting.go
 ├── pkg/log/logger.go
 ├── utils/timeutil/timeutil.go
 └── vars/vars.go
 ```
+
+模板中的 MCP 分层：
+
+- `cmd/mcp.go`：薄 CLI 入口，仅做命令委托
+- `internal/mcp/server.go`：创建并启动 MCP stdio server
+- `internal/mcp/handler/*`：tool 注册与请求解析
+- `internal/mcp/service/*`：handler 调用的业务逻辑
 
 ## 生成项目默认命令
 
@@ -137,6 +151,7 @@ my-new-cli/
 | `mcp` | 启动 MCP stdio Server（内置 `hello` tool） |
 
 若使用 `--minimal`，生成项目仅保留 `version` 命令。
+`cmd/greet.go`、`cmd/mcp.go` 与 `internal/mcp/**` 不会生成。
 
 ## 日志模式说明
 

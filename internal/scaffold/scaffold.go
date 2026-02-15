@@ -69,6 +69,9 @@ func Generate(outputDir string, data TemplateData) error {
 			return nil
 		}
 		if shouldSkipTemplate(path, data) {
+			if d.IsDir() {
+				return fs.SkipDir
+			}
 			return nil
 		}
 
@@ -132,7 +135,8 @@ func shouldSkipTemplate(path string, data TemplateData) bool {
 		templateRoot + "/cmd/mcp.go.tmpl":
 		return true
 	default:
-		return false
+		return path == templateRoot+"/internal" ||
+			strings.HasPrefix(path, templateRoot+"/internal/")
 	}
 }
 

@@ -1,3 +1,13 @@
+### v1.1.0(20260215)
+#### feature:
+1. 新增 MCP 模板分层结构：将 `cmd/mcp.go` 中的 server 与 tool 逻辑下沉到 `internal/mcp/server.go`、`internal/mcp/handler/hello.go`、`internal/mcp/service/greeting.go`，提升 CLI 层职责清晰度并便于后续扩展。
+2. 新增模板测试覆盖：`internal/scaffold/scaffold_test.go` 增加对 `internal/mcp` 分层文件存在性与 minimal 模式缺失性的断言，确保模板输出与分层约定一致。
+
+#### optimization:
+1. 优化模板生成跳过逻辑：`Generate` 在 minimal 模式下遇到被跳过目录时返回 `fs.SkipDir`，避免创建无效空目录。
+2. 优化中英文文档与模板 README 的分层说明，统一展示 `cmd -> internal/mcp/server -> handler -> service` 的 MCP 代码组织方式，便于使用者理解模板架构。
+3. 升级脚手架版本号：`AppVersion` 更新为 `v1.1.0`，与本次发布内容保持一致。
+
 ## v1.0.0(20260215)
 #### feature:
 1. 新增 `go-cli-starter` 脚手架工具，支持通过 `go run github.com/SisyphusSQ/go-cli-starter@latest new <dir>` 快速生成 Go CLI 项目基础结构。

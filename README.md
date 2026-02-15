@@ -123,10 +123,24 @@ my-new-cli/
 │   ├── version.go
 │   ├── greet.go
 │   └── mcp.go
+├── internal/
+│   └── mcp/
+│       ├── server.go
+│       ├── handler/
+│       │   └── hello.go
+│       └── service/
+│           └── greeting.go
 ├── pkg/log/logger.go
 ├── utils/timeutil/timeutil.go
 └── vars/vars.go
 ```
+
+MCP layering in generated template:
+
+- `cmd/mcp.go`: thin CLI entry, delegates to internal package
+- `internal/mcp/server.go`: builds and starts MCP stdio server
+- `internal/mcp/handler/*`: tool registration + request parsing
+- `internal/mcp/service/*`: business logic called by handlers
 
 ## Default commands in generated project
 
@@ -137,6 +151,7 @@ my-new-cli/
 | `mcp` | Start MCP stdio server (with built-in `hello` tool) |
 
 In `--minimal` mode, generated project keeps only the `version` command.
+`cmd/greet.go`, `cmd/mcp.go`, and `internal/mcp/**` are not generated.
 
 ## Logging modes
 

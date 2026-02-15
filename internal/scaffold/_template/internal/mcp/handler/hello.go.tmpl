@@ -1,0 +1,36 @@
+package handler
+
+import (
+	"context"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
+
+	"{{ .ModuleName }}/internal/mcp/service"
+)
+
+// InitHelloTool registers the hello tool on the MCP server.
+func InitHelloTool(s *server.MCPServer, greetingSrv service.GreetingService) {
+	helloTool := mcp.NewTool(
+		"hello",
+		mcp.WithDescription("Return a friendly greeting"),
+		mcp.WithString(
+			"name",
+			mcp.Required(),
+			mcp.Description("Name to greet"),
+		),
+	)
+
+	s.AddTool(helloTool, func(
+		ctx context.Context,
+		request mcp.CallToolRequest,
+	) (*mcp.CallToolResult, error) {
+		name, err := request.RequireString("name")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+
+		greeting := greetingSrv.Greet(ctx, name)
+		return mcp.NewToolResultText(greeting), nil
+	})
+}

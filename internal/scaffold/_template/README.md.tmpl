@@ -16,6 +16,13 @@ go build -o bin/{{ .BinaryName }} ./main.go
 {{- if not .Minimal }}
 - `greet --name World`: sample command for Cobra usage
 - `mcp`: start MCP stdio server with a sample `hello` tool
+
+## MCP Layering
+
+- `cmd/mcp.go`: thin CLI entry, delegates to internal package
+- `internal/mcp/server.go`: builds and starts MCP stdio server
+- `internal/mcp/handler/*`: tool registration + request parsing
+- `internal/mcp/service/*`: business logic called by handlers
 {{- end }}
 
 ## Included Utilities

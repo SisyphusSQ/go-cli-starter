@@ -1,0 +1,35 @@
+package mcp
+
+import (
+	"fmt"
+
+	"github.com/mark3labs/mcp-go/server"
+
+	"{{ .ModuleName }}/internal/mcp/handler"
+	"{{ .ModuleName }}/internal/mcp/service"
+)
+
+// NewServer creates a configured MCP server with all tools registered.
+func NewServer(name, version string) *server.MCPServer {
+	s := server.NewMCPServer(
+		name,
+		version,
+		server.WithToolCapabilities(false),
+		server.WithRecovery(),
+	)
+
+	greetingSrv := service.NewGreetingService()
+	handler.InitHelloTool(s, greetingSrv)
+
+	return s
+}
+
+// Serve starts the MCP server over stdio.
+func Serve(name, version string) error {
+	s := NewServer(name, version)
+	if err := server.ServeStdio(s); err != nil {
+		return fmt.Errorf("serve mcp stdio: %w", err)
+	}
+
+	return nil
+}
