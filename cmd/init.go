@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/SisyphusSQ/go-cli-starter/internal/scaffold"
+	"github.com/SisyphusSQ/go-cli-starter/internal/scaf_fold"
 )
 
 var (
@@ -29,7 +29,7 @@ var initCmd = &cobra.Command{
 			return err
 		}
 
-		if err := scaffold.Generate(".", data); err != nil {
+		if err := scaf_fold.Generate(".", data); err != nil {
 			return fmt.Errorf("initialize project: %w", err)
 		}
 

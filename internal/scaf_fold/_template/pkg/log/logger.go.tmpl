@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"{{ .ModuleName }}/utils/timeutil"
+	"{{ .ModuleName }}/utils/time_util"
 )
 
 type OutputMode string
@@ -44,7 +44,7 @@ func New(isDebug bool, mode OutputMode, filePath ...string) error {
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    customLevelEncoder,
-		EncodeTime:     zapcore.TimeEncoderOfLayout(timeutil.CSTLayout),
+		EncodeTime:     zapcore.TimeEncoderOfLayout(time_util.CSTLayout),
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   customCallerEncoder,
 	}

@@ -1,4 +1,4 @@
-package scaffold
+package scaf_fold
 
 import (
 	"bufio"
@@ -46,13 +46,16 @@ func TestGenerate(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(outputDir, "main.go")); err != nil {
 		t.Fatalf("generated main.go missing: %v", err)
 	}
+	if _, err := os.Stat(filepath.Join(outputDir, "README_CN.md")); err != nil {
+		t.Fatalf("generated README_CN.md missing: %v", err)
+	}
 	if _, err := os.Stat(filepath.Join(outputDir, "changeLog.md")); err != nil {
 		t.Fatalf("generated changeLog.md missing: %v", err)
 	}
 	requiredUtils := []string{
 		filepath.Join("utils", "retry", "retry.go"),
-		filepath.Join("utils", "httputil", "client.go"),
-		filepath.Join("utils", "fileutil", "fileutil.go"),
+		filepath.Join("utils", "http_util", "client.go"),
+		filepath.Join("utils", "file_util", "fileutil.go"),
 	}
 	for _, relPath := range requiredUtils {
 		if _, err := os.Stat(filepath.Join(outputDir, relPath)); err != nil {
@@ -275,6 +278,9 @@ func TestGenerateMinimalMode(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(outputDir, "cmd", "version.go")); err != nil {
 		t.Fatalf("expected cmd/version.go to exist: %v", err)
 	}
+	if _, err := os.Stat(filepath.Join(outputDir, "README_CN.md")); err != nil {
+		t.Fatalf("expected README_CN.md to exist in minimal mode: %v", err)
+	}
 	if _, err := os.Stat(filepath.Join(outputDir, "cmd", "greet.go")); !os.IsNotExist(err) {
 		t.Fatalf("expected cmd/greet.go to be absent, got err=%v", err)
 	}
@@ -295,8 +301,8 @@ func TestGenerateMinimalMode(t *testing.T) {
 	}
 	for _, relPath := range []string{
 		filepath.Join("utils", "retry", "retry.go"),
-		filepath.Join("utils", "httputil", "client.go"),
-		filepath.Join("utils", "fileutil", "fileutil.go"),
+		filepath.Join("utils", "http_util", "client.go"),
+		filepath.Join("utils", "file_util", "fileutil.go"),
 	} {
 		if _, err := os.Stat(filepath.Join(outputDir, relPath)); err != nil {
 			t.Fatalf("expected %s to exist in minimal mode: %v", relPath, err)
@@ -483,7 +489,7 @@ func TestGenerateMCPStdioSmoke(t *testing.T) {
 		"params": map[string]any{
 			"protocolVersion": "2024-11-05",
 			"clientInfo": map[string]any{
-				"name":    "scaffold-smoke-test",
+				"name":    "scaf_fold-smoke-test",
 				"version": "1.0.0",
 			},
 		},

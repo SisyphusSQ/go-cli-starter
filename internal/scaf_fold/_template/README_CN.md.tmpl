@@ -1,0 +1,49 @@
+# {{ .ProjectName }}
+
+[English](./README.md) | 简体中文
+
+{{ .ProjectName }} 是由 `go-cli-starter` 生成的 Go CLI 项目。
+
+## 快速开始
+
+```bash
+go mod tidy
+go build -o bin/{{ .BinaryName }} ./main.go
+./bin/{{ .BinaryName }} version
+```
+
+## 命令
+
+- `version`: 输出构建与版本信息
+{{- if not .Minimal }}
+- `greet --name World`: Cobra 命令开发示例
+- `mcp`: 启动 MCP stdio server（内置 `hello` tool）
+
+## MCP 分层
+
+- `cmd/mcp.go`: 轻量 CLI 入口，负责调用内部模块
+- `internal/mcp/server.go`: 构建并启动 MCP stdio server
+- `internal/mcp/handler/*`: tool 注册与请求解析
+- `internal/mcp/service/*`: handler 调用的业务逻辑
+{{- end }}
+
+## 内置工具模块
+
+- `pkg/log`: zap 日志封装，支持 stdio/stderr/file 输出
+- `utils/time_util`: 通用时间格式常量
+- `utils/retry`: 指数退避 + 抖动重试工具
+- `utils/http_util`: 内置重试与 JSON 辅助的 HTTP 客户端
+- `utils/file_util`: 常用文件工具（存在性/复制/JSON 读写）
+
+## 开发
+
+```bash
+make help
+make fmt
+make test
+make build
+```
+
+## License
+
+MIT，详见 `LICENSE`。

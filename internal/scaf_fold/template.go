@@ -1,4 +1,4 @@
-package scaffold
+package scaf_fold
 
 import (
 	"bytes"

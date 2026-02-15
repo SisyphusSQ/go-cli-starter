@@ -118,6 +118,7 @@ my-new-cli/
 ├── changeLog.md
 ├── LICENSE
 ├── README.md
+├── README_CN.md
 ├── cmd/
 │   ├── root.go
 │   ├── version.go
@@ -131,7 +132,7 @@ my-new-cli/
 │       └── service/
 │           └── greeting.go
 ├── pkg/log/logger.go
-├── utils/timeutil/timeutil.go
+├── utils/time_util/timeutil.go
 └── vars/vars.go
 ```
 

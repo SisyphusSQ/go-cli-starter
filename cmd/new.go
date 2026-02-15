@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/SisyphusSQ/go-cli-starter/internal/scaffold"
+	"github.com/SisyphusSQ/go-cli-starter/internal/scaf_fold"
 )
 
 var (
@@ -33,7 +33,7 @@ var newCmd = &cobra.Command{
 			return err
 		}
 
-		if err := scaffold.Generate(outputDir, data); err != nil {
+		if err := scaf_fold.Generate(outputDir, data); err != nil {
 			return fmt.Errorf("generate project: %w", err)
 		}
 
@@ -72,10 +72,10 @@ func buildTemplateData(
 	moduleValue string,
 	binaryValue string,
 	minimal bool,
-) (scaffold.TemplateData, error) {
+) (scaf_fold.TemplateData, error) {
 	projectName, err := inferProjectName(outputDir)
 	if err != nil {
-		return scaffold.TemplateData{}, err
+		return scaf_fold.TemplateData{}, err
 	}
 
 	moduleName := strings.TrimSpace(moduleValue)
@@ -88,7 +88,7 @@ func buildTemplateData(
 		binaryName = projectName
 	}
 
-	return scaffold.TemplateData{
+	return scaf_fold.TemplateData{
 		ModuleName:  moduleName,
 		BinaryName:  binaryName,
 		ProjectName: projectName,
