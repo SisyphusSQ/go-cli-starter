@@ -1,0 +1,32 @@
+package cmd
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/spf13/cobra"
+
+	l "{{ .ModuleName }}/pkg/log"
+)
+
+var greetName string
+
+var greetCmd = &cobra.Command{
+	Use:   "greet",
+	Short: "Print a greeting message",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		name := strings.TrimSpace(greetName)
+		if name == "" {
+			name = "World"
+		}
+
+		l.Logger.Infof("running greet command, name=%s", name)
+		fmt.Printf("Hello, %s!\n", name)
+		return nil
+	},
+}
+
+func initGreet() {
+	greetCmd.Flags().StringVar(&greetName, "name", "World", "Name to greet")
+	rootCmd.AddCommand(greetCmd)
+}

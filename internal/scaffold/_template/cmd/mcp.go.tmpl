@@ -1,0 +1,72 @@
+package cmd
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
+	"github.com/spf13/cobra"
+
+	l "{{ .ModuleName }}/pkg/log"
+	"{{ .ModuleName }}/vars"
+)
+
+var mcpCmd = &cobra.Command{
+	Use:   "mcp",
+	Short: "Start MCP server over stdio",
+	Long:  "Start an MCP stdio server with a sample hello tool.",
+	Annotations: map[string]string{
+		forceStderrAnnotationKey: "true",
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		s := server.NewMCPServer(
+			vars.AppName,
+			vars.AppVersion,
+			server.WithToolCapabilities(false),
+			server.WithRecovery(),
+		)
+
+		helloTool := mcp.NewTool(
+			"hello",
+			mcp.WithDescription("Return a friendly greeting"),
+			mcp.WithString(
+				"name",
+				mcp.Required(),
+				mcp.Description("Name to greet"),
+			),
+		)
+		s.AddTool(helloTool, helloToolHandler)
+
+		l.Logger.Infof("starting mcp stdio server")
+		if err := server.ServeStdio(s); err != nil {
+			return fmt.Errorf("serve mcp stdio: %w", err)
+		}
+
+		return nil
+	},
+}
+
+func helloToolHandler(
+	ctx context.Context,
+	request mcp.CallToolRequest,
+) (*mcp.CallToolResult, error) {
+	_ = ctx
+
+	name, err := request.RequireString("name")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+
+	name = strings.TrimSpace(name)
+	if name == "" {
+		name = "World"
+	}
+
+	return mcp.NewToolResultText(fmt.Sprintf("Hello, %s!", name)), nil
+}
+
+func initMCP() {
+	rootCmd.AddCommand(mcpCmd)
+}

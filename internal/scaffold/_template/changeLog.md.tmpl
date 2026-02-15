@@ -1,0 +1,12 @@
+## v0.1.0(20260215)
+#### feature:
+1. 新增基于 Cobra 的 CLI 基础结构，包含 `version`、`greet`、`mcp` 三个子命令，便于快速开展命令行开发。
+2. 新增 `pkg/log` 日志组件，支持 `stdio/stderr/file` 三种输出模式，默认输出到 stdio，并兼容 MCP 场景的 stderr 隔离。
+3. 新增 `mcp` 命令示例，接入 `github.com/mark3labs/mcp-go` 并内置 `hello` tool，便于快速接入 MCP Server 能力。
+
+#### optimization:
+1. 新增增强版 `Makefile`，提供 `fmt`、`lint`、`test`、`coverage`、`tidy` 与多平台交叉编译目标，完善工程化体验。
+2. 新增 `vars` 构建注入变量与 `version` 展示逻辑，便于发布追踪与问题定位。
+
+#### bugFix:
+1. 修复 MCP 命令默认日志输出到 stdout 可能污染协议流的问题，统一在 MCP 场景下切换到 stderr。
