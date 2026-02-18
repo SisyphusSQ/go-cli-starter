@@ -17,14 +17,35 @@ go build -o bin/{{ .BinaryName }} ./main.go
 - `version`: print build and version info
 {{- if not .Minimal }}
 - `greet --name World`: sample command for Cobra usage
-- `mcp`: start MCP stdio server with a sample `hello` tool
+- `mcp`: start MCP server with a sample `hello` tool (`stdio`/`sse`/`http`)
 
 ## MCP Layering
 
 - `cmd/mcp.go`: thin CLI entry, delegates to internal package
-- `internal/mcp/server.go`: builds and starts MCP stdio server
+- `internal/mcp/server.go`: builds server, transport wrappers, config loading
 - `internal/mcp/handler/*`: tool registration + request parsing
 - `internal/mcp/service/*`: business logic called by handlers
+
+## MCP Usage
+
+```bash
+# stdio (default)
+./bin/{{ .BinaryName }} mcp
+
+# sse
+./bin/{{ .BinaryName }} mcp --transport sse --host 0.0.0.0 --port 8080
+
+# http
+./bin/{{ .BinaryName }} mcp --transport http --host 0.0.0.0 --port 8080
+
+# all transports
+./bin/{{ .BinaryName }} mcp --transport all --host 0.0.0.0 --port 8080
+# all mode: SSE listens on 8080, HTTP listens on 8081
+
+# load from config
+./bin/{{ .BinaryName }} mcp --config docs/examples/mcp.json
+# note: enable_stdio/enable_sse/enable_http are used when transport=all
+```
 {{- end }}
 
 ## Included Utilities

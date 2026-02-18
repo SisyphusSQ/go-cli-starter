@@ -136,7 +136,9 @@ func shouldSkipTemplate(path string, data TemplateData) bool {
 		return true
 	default:
 		return path == templateRoot+"/internal" ||
-			strings.HasPrefix(path, templateRoot+"/internal/")
+			path == templateRoot+"/docs" ||
+			strings.HasPrefix(path, templateRoot+"/internal/") ||
+			strings.HasPrefix(path, templateRoot+"/docs/")
 	}
 }
 

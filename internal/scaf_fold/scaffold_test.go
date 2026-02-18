@@ -66,6 +66,7 @@ func TestGenerate(t *testing.T) {
 		filepath.Join("internal", "mcp", "server.go"),
 		filepath.Join("internal", "mcp", "handler", "hello.go"),
 		filepath.Join("internal", "mcp", "service", "greeting.go"),
+		filepath.Join("docs", "examples", "mcp.json"),
 	}
 	for _, relPath := range requiredMCPFiles {
 		if _, err := os.Stat(filepath.Join(outputDir, relPath)); err != nil {
@@ -253,8 +254,61 @@ func TestGenerateE2EProjectBuildAndMCPHelp(t *testing.T) {
 		t.Fatalf("go run . mcp --help failed: %v\nstdout:\n%s\nstderr:\n%s", err, stdout, stderr)
 	}
 	helpOutput := stdout + stderr
-	if !strings.Contains(helpOutput, "Start an MCP stdio server") {
+	if !strings.Contains(helpOutput, "Start MCP (Model Context Protocol) server.") {
 		t.Fatalf("mcp --help output missing expected text:\n%s", helpOutput)
+	}
+	if !strings.Contains(helpOutput, "all mode uses --port for SSE, and --port+1 for HTTP") {
+		t.Fatalf("mcp --help output missing all-mode port mapping:\n%s", helpOutput)
+	}
+}
+
+func TestGenerateMCPConfigAllRequiresEnabledTransport(t *testing.T) {
+	baseDir := t.TempDir()
+	outputDir := filepath.Join(baseDir, "demo-config-all-validation")
+	data := TemplateData{
+		ModuleName:  "github.com/test/demo-config-all-validation",
+		BinaryName:  "demo-config-all-validation",
+		ProjectName: "demo-config-all-validation",
+	}
+
+	if err := Generate(outputDir, data); err != nil {
+		t.Fatalf("Generate() error = %v", err)
+	}
+	if stdout, stderr, err := runGoCommand(outputDir, "mod", "tidy"); err != nil {
+		t.Fatalf(
+			"go mod tidy failed: %v\nstdout:\n%s\nstderr:\n%s",
+			err,
+			stdout,
+			stderr,
+		)
+	}
+
+	invalidConfig := `{
+  "name": "demo-config-all-validation",
+  "version": "v0.1.0",
+  "transport": "all",
+  "host": "0.0.0.0",
+  "port": 8080,
+  "enable_stdio": false,
+  "enable_sse": false,
+  "enable_http": false
+}`
+	configPath := filepath.Join(outputDir, "invalid_all_config.json")
+	if err := os.WriteFile(configPath, []byte(invalidConfig), 0o644); err != nil {
+		t.Fatalf("write invalid config file: %v", err)
+	}
+
+	stdout, stderr, err := runGoCommand(outputDir, "run", ".", "mcp", "--config", configPath)
+	if err == nil {
+		t.Fatalf(
+			"expected config validation failure, got success\nstdout:\n%s\nstderr:\n%s",
+			stdout,
+			stderr,
+		)
+	}
+	output := stdout + stderr
+	if !strings.Contains(output, "transport=all requires at least one enabled transport") {
+		t.Fatalf("unexpected error output:\n%s", output)
 	}
 }
 
@@ -289,6 +343,9 @@ func TestGenerateMinimalMode(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(outputDir, "internal")); !os.IsNotExist(err) {
 		t.Fatalf("expected internal directory to be absent, got err=%v", err)
+	}
+	if _, err := os.Stat(filepath.Join(outputDir, "docs")); !os.IsNotExist(err) {
+		t.Fatalf("expected docs directory to be absent, got err=%v", err)
 	}
 	for _, relPath := range []string{
 		filepath.Join("internal", "mcp", "server.go"),
@@ -399,6 +456,7 @@ func TestGenerateMCPStdioSmoke(t *testing.T) {
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("start mcp command: %v", err)
 	}
+	protocolReader := bufio.NewReader(stdoutPipe)
 
 	readFrameWithTimeout := func(timeout time.Duration) (string, error) {
 		t.Helper()
@@ -406,7 +464,7 @@ func TestGenerateMCPStdioSmoke(t *testing.T) {
 		responseCh := make(chan string, 1)
 		responseErrCh := make(chan error, 1)
 		go func() {
-			body, readErr := readJSONRPCFrame(stdoutPipe)
+			body, readErr := readJSONRPCFrame(protocolReader)
 			if readErr != nil {
 				responseErrCh <- readErr
 				return
@@ -613,8 +671,7 @@ func runGoCommand(dir string, args ...string) (string, string, error) {
 	return stdout.String(), stderr.String(), err
 }
 
-func readJSONRPCFrame(r io.Reader) (string, error) {
-	reader := bufio.NewReader(r)
+func readJSONRPCFrame(reader *bufio.Reader) (string, error) {
 	firstLine, err := reader.ReadString('\n')
 	if err != nil && err != io.EOF {
 		return "", fmt.Errorf("read protocol output: %w", err)

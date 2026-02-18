@@ -1,13 +1,51 @@
 package mcp
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/mark3labs/mcp-go/server"
 
 	"{{ .ModuleName }}/internal/mcp/handler"
 	"{{ .ModuleName }}/internal/mcp/service"
 )
+
+type Transport string
+
+const (
+	TransportStdio Transport = "stdio"
+	TransportSSE   Transport = "sse"
+	TransportHTTP  Transport = "http"
+	TransportAll   Transport = "all"
+)
+
+type Config struct {
+	Name        string    `json:"name"`
+	Version     string    `json:"version"`
+	Transport   Transport `json:"transport"`
+	Host        string    `json:"host"`
+	Port        int       `json:"port"`
+	EnableStdio bool      `json:"enable_stdio"`
+	EnableSSE   bool      `json:"enable_sse"`
+	EnableHTTP  bool      `json:"enable_http"`
+}
+
+func LoadConfig(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read config file: %w", err)
+	}
+
+	var cfg Config
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return nil, fmt.Errorf("parse config: %w", err)
+	}
+
+	return &cfg, nil
+}
 
 // NewServer creates a configured MCP server with all tools registered.
 func NewServer(name, version string) *server.MCPServer {
@@ -24,12 +62,123 @@ func NewServer(name, version string) *server.MCPServer {
 	return s
 }
 
-// Serve starts the MCP server over stdio.
-func Serve(name, version string) error {
+// ServeStdio starts the MCP server over stdio.
+func ServeStdio(name, version string) error {
 	s := NewServer(name, version)
 	if err := server.ServeStdio(s); err != nil {
 		return fmt.Errorf("serve mcp stdio: %w", err)
 	}
 
 	return nil
+}
+
+// ServeSSE starts the MCP server over server-sent events.
+func ServeSSE(name, version, host string, port int) error {
+	s := NewServer(name, version)
+	sseServer := server.NewSSEServer(s)
+
+	addr := fmt.Sprintf("%s:%d", host, port)
+	if err := sseServer.Start(addr); err != nil {
+		return fmt.Errorf("serve mcp sse: %w", err)
+	}
+
+	fmt.Fprintf(os.Stderr, "MCP SSE server started on http://%s\n", addr)
+	waitForSignal()
+	return nil
+}
+
+// ServeHTTP starts the MCP server over streamable HTTP.
+func ServeHTTP(name, version, host string, port int) error {
+	s := NewServer(name, version)
+	httpServer := server.NewStreamableHTTPServer(s)
+
+	addr := fmt.Sprintf("%s:%d", host, port)
+	if err := httpServer.Start(addr); err != nil {
+		return fmt.Errorf("serve mcp http: %w", err)
+	}
+
+	fmt.Fprintf(os.Stderr, "MCP HTTP server started on http://%s\n", addr)
+	waitForSignal()
+	return nil
+}
+
+// ServeAll starts stdio/SSE/HTTP transports concurrently.
+func ServeAll(
+	name string,
+	version string,
+	host string,
+	port int,
+	stdio bool,
+	sse bool,
+	http bool,
+) error {
+	if !stdio && !sse && !http {
+		return fmt.Errorf("at least one transport must be enabled")
+	}
+
+	s := NewServer(name, version)
+
+	errChan := make(chan error, 3)
+	stopChan := make(chan struct{})
+	fmt.Fprintf(
+		os.Stderr,
+		"MCP all mode port mapping: SSE=%s:%d HTTP=%s:%d\n",
+		host,
+		port,
+		host,
+		port+1,
+	)
+
+	if stdio {
+		go func() {
+			fmt.Fprintln(os.Stderr, "MCP STDIO server started")
+			if err := server.ServeStdio(s); err != nil {
+				errChan <- fmt.Errorf("stdio: %w", err)
+			}
+		}()
+	}
+
+	if sse {
+		go func() {
+			addr := fmt.Sprintf("%s:%d", host, port)
+			sseServer := server.NewSSEServer(s)
+			fmt.Fprintf(os.Stderr, "MCP SSE server started on http://%s\n", addr)
+			if err := sseServer.Start(addr); err != nil {
+				errChan <- fmt.Errorf("sse: %w", err)
+			}
+		}()
+	}
+
+	if http {
+		go func() {
+			addr := fmt.Sprintf("%s:%d", host, port+1)
+			httpServer := server.NewStreamableHTTPServer(s)
+			fmt.Fprintf(os.Stderr, "MCP HTTP server started on http://%s\n", addr)
+			if err := httpServer.Start(addr); err != nil {
+				errChan <- fmt.Errorf("http: %w", err)
+			}
+		}()
+	}
+
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+		close(stopChan)
+	}()
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-stopChan:
+		fmt.Fprintln(os.Stderr, "Shutting down MCP server...")
+		return nil
+	}
+}
+
+func waitForSignal() {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+	fmt.Fprintln(os.Stderr, "Shutting down MCP server...")
 }

@@ -1,3 +1,15 @@
+### v1.2.0(20260218)
+#### feature:
+1. 新增 MCP 多协议传输模板封装：`internal/mcp/server.go` 模板支持 `stdio`、`sse`、`http` 与 `all` 并发启动，补充 `Transport`/`Config` 结构、`LoadConfig` 配置加载与信号优雅退出能力，便于生成项目在不同 MCP 客户端与部署形态下直接使用。
+2. 新增 MCP 命令多协议参数：`cmd/mcp.go` 模板新增 `--transport`、`--host`、`--port`、`--config`，并支持按 JSON 配置文件启动，降低生成项目接入 SSE/HTTP 场景的改造成本。
+3. 新增 MCP 配置示例模板：增加 `docs/examples/mcp.json`，生成项目可直接参考并复用标准配置。
+
+#### optimization:
+1. 升级模板 `mcp-go` 依赖至 `v0.44.0`，与多协议传输能力保持一致。
+2. 优化 minimal 模式模板跳过逻辑：新增 `docs/` 目录跳过规则，避免生成无效文档目录。
+3. 优化模板文档与测试：更新中英文 README 的 MCP 使用说明与多协议示例，并补充 `docs/examples/mcp.json` 存在性和 minimal 模式目录缺失断言。
+4. 根据代码评审修复多协议边界：`transport=all` 在配置场景增加“至少启用一个协议”校验，避免无服务阻塞；同步统一 all 模式端口语义（SSE=`--port`、HTTP=`--port+1`），并补充对应回归测试与 JSON-RPC 读帧稳定性优化（复用同一 `bufio.Reader`）。
+
 ### v1.1.1(20260215)
 #### feature:
 1. 统一包名与目录蛇形命名

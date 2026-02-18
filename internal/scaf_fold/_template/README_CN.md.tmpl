@@ -17,14 +17,35 @@ go build -o bin/{{ .BinaryName }} ./main.go
 - `version`: 输出构建与版本信息
 {{- if not .Minimal }}
 - `greet --name World`: Cobra 命令开发示例
-- `mcp`: 启动 MCP stdio server（内置 `hello` tool）
+- `mcp`: 启动 MCP server（支持 `stdio`/`sse`/`http`，内置 `hello` tool）
 
 ## MCP 分层
 
 - `cmd/mcp.go`: 轻量 CLI 入口，负责调用内部模块
-- `internal/mcp/server.go`: 构建并启动 MCP stdio server
+- `internal/mcp/server.go`: 构建 server、封装传输协议、加载配置
 - `internal/mcp/handler/*`: tool 注册与请求解析
 - `internal/mcp/service/*`: handler 调用的业务逻辑
+
+## MCP 使用示例
+
+```bash
+# stdio（默认）
+./bin/{{ .BinaryName }} mcp
+
+# sse
+./bin/{{ .BinaryName }} mcp --transport sse --host 0.0.0.0 --port 8080
+
+# http
+./bin/{{ .BinaryName }} mcp --transport http --host 0.0.0.0 --port 8080
+
+# 同时启动全部协议
+./bin/{{ .BinaryName }} mcp --transport all --host 0.0.0.0 --port 8080
+# all 模式下：SSE 监听 8080，HTTP 监听 8081（即 --port+1）
+
+# 从配置文件加载
+./bin/{{ .BinaryName }} mcp --config docs/examples/mcp.json
+# 说明：enable_stdio/enable_sse/enable_http 仅在 transport=all 时生效
+```
 {{- end }}
 
 ## 内置工具模块
